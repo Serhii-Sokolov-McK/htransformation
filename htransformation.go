@@ -77,7 +77,16 @@ func (u *HeadersTransformation) ServeHTTP(rw http.ResponseWriter, req *http.Requ
 		case "Set":
 			req.Header.Set(rule.Header, rule.Value)
 		case "Del":
-			req.Header.Del(rule.Header)
+			for headerName := range req.Header {
+				matched, err := regexp.Match(rule.Header, []byte(headerName))
+				if err != nil {
+					http.Error(rw, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				if matched {
+					req.Header.Del(headerName)
+				}
+			}
 		case "Join":
 			if val, ok := req.Header[rule.Header]; ok {
 				req.Header.Del(rule.Header)
